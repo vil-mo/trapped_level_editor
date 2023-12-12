@@ -8,12 +8,8 @@ use ggez::{
 };
 
 use super::{
-    floor::{Floor, FloorType},
-    object::{Object, ObjectType},
-    resources::{DrawId, Resources},
-    wall::Wall,
-    win::Win,
-    Colors, Layer, LayerContent, Tool,
+    instances::{collectible::Collectible, floor::Floor, object::Object, wall::Wall},
+    resources::Resources,
 };
 
 #[derive(Debug, Default)]
@@ -21,7 +17,7 @@ pub struct LevelData {
     objects: HashMap<IVec2, Object>,
     walls: HashMap<IVec2, Wall>,
     floors: HashMap<IVec2, Floor>,
-    wins: HashMap<IVec2, Win>,
+    collectibles: HashMap<IVec2, Collectible>,
 }
 
 impl LevelData {
@@ -79,18 +75,33 @@ impl LevelData {
         for (pos, wall) in &self.walls {
             let draw_param = Self::gen_draw_param(&pos);
 
-            
             if wall.orientation.down {
                 match wall.opened {
-                    true => resources.draw_drawing(canvas, DrawId::VerticalWallOpened, draw_param.clone())?,
-                    false => resources.draw_drawing(canvas, DrawId::VerticalWallClosed, draw_param.clone())?,
+                    true => resources.draw_drawing(
+                        canvas,
+                        DrawId::VerticalWallOpened,
+                        draw_param.clone(),
+                    )?,
+                    false => resources.draw_drawing(
+                        canvas,
+                        DrawId::VerticalWallClosed,
+                        draw_param.clone(),
+                    )?,
                 }
             }
 
             if wall.orientation.right {
                 match wall.opened {
-                    true => resources.draw_drawing(canvas, DrawId::HorizontalWallOpened, draw_param.clone())?,
-                    false => resources.draw_drawing(canvas, DrawId::HorizontalWallClosed, draw_param.clone())?,
+                    true => resources.draw_drawing(
+                        canvas,
+                        DrawId::HorizontalWallOpened,
+                        draw_param.clone(),
+                    )?,
+                    false => resources.draw_drawing(
+                        canvas,
+                        DrawId::HorizontalWallClosed,
+                        draw_param.clone(),
+                    )?,
                 }
             }
         }
