@@ -1,8 +1,8 @@
 use self::{
-    collectible::{Collectible, CollectibleType},
-    floor::{Floor, FloorType},
-    object::{Object, ObjectType},
-    wall::{WallData, WallType, Wall},
+    collectible::Collectible,
+    floor::Floor,
+    object::Object,
+    wall::{Wall, WallData},
 };
 
 pub mod collectible;
@@ -31,4 +31,3 @@ pub enum Layer<O = (), F = (), W = (), C = ()> {
 
 pub type LayerData = Layer<Object, Floor, WallData, Collectible>;
 pub type LayerContent = Layer<Object, Floor, Wall, Collectible>;
-pub type Item = Layer<ObjectType, FloorType, WallType, CollectibleType>;

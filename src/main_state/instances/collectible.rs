@@ -6,7 +6,7 @@ pub enum CollectibleType {
 #[non_exhaustive]
 #[derive(Debug, Clone)]
 pub struct Collectible {
-    collectible_type: CollectibleType,
+    pub collectible_type: CollectibleType,
 }
 
 impl Collectible {

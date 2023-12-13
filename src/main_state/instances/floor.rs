@@ -23,12 +23,4 @@ impl Floor {
             durability: -1,
         }
     }
-
-    pub fn new_with_dur(floor_type: FloorType, color: ActivatingColor, durability: i32) -> Floor {
-        Floor {
-            floor_type,
-            color,
-            durability,
-        }
-    }
 }
