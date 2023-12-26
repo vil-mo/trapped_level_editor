@@ -1,4 +1,4 @@
-use std::{collections::HashMap, path::Path, convert::Infallible};
+use std::collections::HashMap;
 
 use ggez::{
     glam::IVec2,
@@ -9,7 +9,7 @@ use ggez::{
 
 use super::{
     instances::{
-        collectible::Collectible, floor::Floor, object::Object, wall::Wall, Layer, LayerContent,
+        collectible::Collectible, floor::Floor, object::Object, wall::{Wall, WallOrientation}, Layer, LayerContent,
         LayerData,
     },
     resources::Resources,
@@ -17,74 +17,22 @@ use super::{
 
 #[derive(Debug, Default)]
 pub struct LevelData {
-    objects: HashMap<IVec2, Object>,
-    walls: HashMap<IVec2, Wall>,
-    floors: HashMap<IVec2, Floor>,
-    collectibles: HashMap<IVec2, Collectible>,
+    pub objects: HashMap<IVec2, Object>,
+    pub walls: HashMap<IVec2, Wall>,
+    pub floors: HashMap<IVec2, Floor>,
+    pub collectibles: HashMap<IVec2, Collectible>,
 }
 
 impl LevelData {
     pub fn new() -> LevelData {
         LevelData::default()
     }
-
-    fn write_line(content: & mut String, name: &str, pos: IVec2, suffix: &str, properties: &[(&str, &str)]) {
-        content.push_str(name);
-        content.push(' ');
-
-        content.push_str(&pos.x.to_string());
-        content.push(',');
-        content.push_str(&pos.y.to_string());
-        content.push(' ');
-
-        content.push_str(suffix);
-
-        for (key, val) in properties {
-            content.push(' ');
-            content.push_str(key);
-            content.push(':');
-            content.push_str(val);
-        }
-
-        content.push('\n');
-    }
-
-    pub fn save(&self, path: &Path) -> GameResult {
-        let mut contents = String::new();
-        let mut dimentions = IVec2::new(0, 0);
-
-        for (pos, floor) in &self.floors {
-            if pos.x > dimentions.x {
-                dimentions.x = pos.x;
-            }
-            if pos.y > dimentions.y {
-                dimentions.y = pos.y;
-            }
-            
-
-            
-
-
-        }
-
-
-        std::fs::write(path, contents)?;
-
-        Ok(())
-    }
-
-    pub fn load(path: &Path) -> LevelData {
-        todo!()
-    }
-
     fn gen_draw_param(pos: &IVec2) -> DrawParam {
         let draw_param = DrawParam::new();
-        draw_param.offset(Point2 {
+        draw_param.dest(Point2 {
             x: (pos.x as f32) * 16.0,
             y: (pos.y as f32) * 16.0,
-        });
-
-        draw_param
+        })
     }
 
     pub fn draw(&self, canvas: &mut Canvas, resources: &Resources) -> GameResult {
@@ -115,28 +63,71 @@ impl LevelData {
         Ok(())
     }
 
-    pub fn get(&self, pos: IVec2, on_layer: Layer) -> Option<LayerContent> {
-        match on_layer {
-            Layer::Object(()) => self
-                .objects
-                .get(&pos)
-                .map(|val| LayerContent::Object(val.clone())),
-            Layer::Wall(()) => self
-                .walls
-                .get(&pos)
-                .map(|val| LayerContent::Wall(val.clone())),
-            Layer::Floor(()) => self
-                .floors
-                .get(&pos)
-                .map(|val| LayerContent::Floor(val.clone())),
-            Layer::Collectible(()) => self
-                .collectibles
-                .get(&pos)
-                .map(|val| LayerContent::Collectible(val.clone())),
+    pub fn draw_with(&self, data_with: LayerContent, pos_with: &IVec2, canvas: &mut Canvas, resources: &Resources) -> GameResult {
+        let mut consumed = false;
+
+        for (pos, floor) in &self.floors {
+            let mut content = floor.clone();
+            if pos == pos_with {
+                if let LayerContent::Floor(dt) = data_with.clone() {
+                    content = dt;
+                    consumed = true;
+                }
+            }
+            let draw_param = Self::gen_draw_param(&pos);
+            resources.draw_content(canvas, LayerContent::Floor(content), draw_param)?;
         }
+
+        for (pos, collectible) in &self.collectibles {
+            let mut content = collectible.clone();
+            if pos == pos_with {
+                if let LayerContent::Collectible(dt) = data_with.clone() {
+                    content = dt;
+                    consumed = true;
+                }
+            }
+            let draw_param = Self::gen_draw_param(&pos);
+            resources.draw_content(
+                canvas,
+                LayerContent::Collectible(content),
+                draw_param,
+            )?;
+        }
+
+        for (pos, object) in &self.objects {
+            let mut content = object.clone();
+            if pos == pos_with {
+                if let LayerContent::Object(dt) = data_with.clone() {
+                    content = dt;
+                    consumed = true;
+                }
+            }
+            let draw_param = Self::gen_draw_param(&pos);
+            resources.draw_content(canvas, LayerContent::Object(content), draw_param)?;
+        }
+
+        for (pos, wall) in &self.walls {
+            let mut content = wall.clone();
+            if pos == pos_with {
+                if let LayerContent::Wall(dt) = data_with.clone() {
+                    content.merge(dt);
+                    consumed = true;
+                }
+            }
+            let draw_param = Self::gen_draw_param(&pos);
+            resources.draw_content(canvas, LayerContent::Wall(content), draw_param)?;
+        }
+
+
+        if !consumed {
+            let draw_param = Self::gen_draw_param(&pos_with);
+            resources.draw_content(canvas, data_with, draw_param)?;
+        }
+
+        Ok(())
     }
 
-    pub fn insert(&mut self, pos: IVec2, data: LayerData, right: bool) {
+    pub fn insert(&mut self, pos: IVec2, data: LayerData, orientation: WallOrientation) {
         match data {
             LayerData::Object(object) => {
                 self.objects.insert(pos, object);
@@ -151,16 +142,7 @@ impl LevelData {
                     self.walls.insert(pos.clone(), Wall::new());
                 }
 
-                let mut wall;
-                if right {
-                    wall = Wall::new();
-                    wall.right = Some(wall_data);
-                } else {
-                    wall = Wall::new();
-                    wall.down = Some(wall_data);
-                }
-
-                self.walls.get_mut(&pos).unwrap().merge(wall);
+                self.walls.get_mut(&pos).unwrap().merge_data(wall_data, orientation);
             }
 
             LayerData::Collectible(collectible) => {
@@ -169,7 +151,7 @@ impl LevelData {
         };
     }
 
-    pub fn remove(&mut self, pos: IVec2, layer: Layer<(), (), (), ()>, right: bool) {
+    pub fn remove(&mut self, pos: IVec2, layer: Layer<(), (), (), ()>, orientation: WallOrientation) {
         match layer {
             Layer::Object(()) => {
                 self.objects.remove(&pos);
@@ -181,10 +163,9 @@ impl LevelData {
 
             Layer::Wall(()) => {
                 self.walls.get_mut(&pos).map(|wall| {
-                    if right {
-                        wall.right = None;
-                    } else {
-                        wall.down = None;
+                    match orientation {
+                        WallOrientation::Right => wall.right = None,
+                        WallOrientation::Down => wall.down = None,
                     };
                 });
             }

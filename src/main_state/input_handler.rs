@@ -5,7 +5,7 @@ use super::instances::{
     wall::{WallData, WallType},
     ActivatingColor, Layer, LayerData,
 };
-use scancode::Scancode;
+use ggez::winit::event::VirtualKeyCode;
 
 const OBJECT_ITEMS: [ObjectType; 3] = [
     ObjectType::Player,  //
@@ -43,6 +43,9 @@ pub struct InputHandler {
 
     floor_durability: i32,
     waiting_for_durability_input: bool,
+
+    pub request_save: bool,
+    pub request_load: bool,
 }
 
 impl InputHandler {
@@ -62,6 +65,9 @@ impl InputHandler {
 
             floor_durability: 1,
             waiting_for_durability_input: false,
+
+            request_save: false,
+            request_load: false,
         }
     }
 
@@ -70,21 +76,24 @@ impl InputHandler {
     }
 
     pub fn handle_input(&mut self, input: ggez::input::keyboard::KeyInput) {
-        let Some(scancode) = Scancode::new(input.scancode as u8) else {
+
+        println!("value: {:?}, scancode: {}, keycode: {:?}", "nowe", input.scancode, input.keycode);
+
+        let Some(keycode) = input.keycode else {
             return;
         };
 
         if self.waiting_for_durability_input {
-            match scancode {
-                Scancode::Num1 => self.floor_durability = 1,
-                Scancode::Num2 => self.floor_durability = 2,
-                Scancode::Num3 => self.floor_durability = 3,
-                Scancode::Num4 => self.floor_durability = 4,
-                Scancode::Num5 => self.floor_durability = 5,
-                Scancode::Num6 => self.floor_durability = 6,
-                Scancode::Num7 => self.floor_durability = 7,
-                Scancode::Num8 => self.floor_durability = 8,
-                Scancode::Num9 => self.floor_durability = 9,
+            match keycode {
+                VirtualKeyCode::Key1 => self.floor_durability = 1,
+                VirtualKeyCode::Key2 => self.floor_durability = 2,
+                VirtualKeyCode::Key3 => self.floor_durability = 3,
+                VirtualKeyCode::Key4 => self.floor_durability = 4,
+                VirtualKeyCode::Key5 => self.floor_durability = 5,
+                VirtualKeyCode::Key6 => self.floor_durability = 6,
+                VirtualKeyCode::Key7 => self.floor_durability = 7,
+                VirtualKeyCode::Key8 => self.floor_durability = 8,
+                VirtualKeyCode::Key9 => self.floor_durability = 9,
 
                 _ => (),
             }
@@ -93,35 +102,39 @@ impl InputHandler {
             return;
         }
 
-        match scancode {
-            Scancode::Num1 => self.layer = Layer::Object(()),
-            Scancode::Num2 => self.layer = Layer::Floor(()),
-            Scancode::Num3 => self.layer = Layer::Wall(()),
-            Scancode::Num4 => self.layer = Layer::Collectible(()),
+        match keycode {
+            VirtualKeyCode::Key1 => self.layer = Layer::Object(()),
+            VirtualKeyCode::Key2 => self.layer = Layer::Floor(()),
+            VirtualKeyCode::Key3 => self.layer = Layer::Wall(()),
+            VirtualKeyCode::Key4 => self.layer = Layer::Collectible(()),
 
-            Scancode::Q => self.set_current_item(0),
-            Scancode::W => self.set_current_item(1),
-            Scancode::E => self.set_current_item(2),
-            Scancode::R => self.set_current_item(3),
-            Scancode::T => self.set_current_item(4),
-            Scancode::Y => self.set_current_item(5),
-            Scancode::U => self.set_current_item(6),
-            Scancode::I => self.set_current_item(7),
-            Scancode::O => self.set_current_item(8),
-            Scancode::P => self.set_current_item(9),
+            VirtualKeyCode::Q => self.set_current_item(0),
+            VirtualKeyCode::W => self.set_current_item(1),
+            VirtualKeyCode::E => self.set_current_item(2),
+            VirtualKeyCode::R => self.set_current_item(3),
+            VirtualKeyCode::T => self.set_current_item(4),
+            VirtualKeyCode::Y => self.set_current_item(5),
+            VirtualKeyCode::U => self.set_current_item(6),
+            VirtualKeyCode::I => self.set_current_item(7),
+            VirtualKeyCode::O => self.set_current_item(8),
+            VirtualKeyCode::P => self.set_current_item(9),
 
-            Scancode::A => self.color = ActivatingColor::None,
-            Scancode::S => self.color = ActivatingColor::Red,
-            Scancode::D => self.color = ActivatingColor::Blue,
-            Scancode::F => self.color = ActivatingColor::Green,
-            Scancode::G => self.color = ActivatingColor::Yellow,
-            Scancode::H => self.color = ActivatingColor::Cyan,
-            Scancode::J => self.color = ActivatingColor::Pink,
+            VirtualKeyCode::A => self.color = ActivatingColor::None,
+            VirtualKeyCode::S => self.color = ActivatingColor::Red,
+            VirtualKeyCode::D => self.color = ActivatingColor::Blue,
+            VirtualKeyCode::F => self.color = ActivatingColor::Green,
+            VirtualKeyCode::G => self.color = ActivatingColor::Yellow,
+            VirtualKeyCode::H => self.color = ActivatingColor::Cyan,
+            VirtualKeyCode::J => self.color = ActivatingColor::Pink,
 
-            Scancode::N => self.wall_input_dependent = !self.wall_input_dependent,
-            Scancode::M => self.wall_opened = !self.wall_opened,
+            VirtualKeyCode::N => self.wall_input_dependent = !self.wall_input_dependent,
+            VirtualKeyCode::M => self.wall_opened = !self.wall_opened,
 
-            Scancode::B => self.waiting_for_durability_input = true,
+            VirtualKeyCode::B => self.waiting_for_durability_input = true,
+            
+
+            VirtualKeyCode::Escape => self.request_save = true,
+            VirtualKeyCode::Space => self.request_load = true,
 
             _ => (),
         }

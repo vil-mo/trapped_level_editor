@@ -16,6 +16,8 @@ enum Images {
     Floor,
     Ghost,
     Wall,
+    TeleBox,
+    Win,
 }
 
 #[derive(Debug, PartialEq, Eq, Hash)]
@@ -55,40 +57,44 @@ impl Resources {
         let floor_img = Image::from_path(ctx, "/Floor.png")?;
         let ghost_img = Image::from_path(ctx, "/Ghost.png")?;
         let wall_img = Image::from_path(ctx, "/Wall.png")?;
+        let telebox_img = Image::from_path(ctx, "/TeleBox.png")?;
+        let win_img = Image::from_path(ctx, "/Win.png")?;
 
         self.images.insert(Images::Box, box_img);
         self.images.insert(Images::Button, button_img);
         self.images.insert(Images::Floor, floor_img);
         self.images.insert(Images::Ghost, ghost_img);
         self.images.insert(Images::Wall, wall_img);
+        self.images.insert(Images::TeleBox, telebox_img);
+        self.images.insert(Images::Win, win_img);
 
         self.draw_id.insert(
             DrawId::Ghost,
-            (Images::Ghost, Rect::new(0.0, 0.0, 16.0, 16.0)),
+            (Images::Ghost, Rect::new(0.0, 0.0, 0.5, 1.0)),
         );
         self.draw_id
-            .insert(DrawId::Box, (Images::Box, Rect::new(0.0, 0.0, 16.0, 16.0)));
-        // self.draw_id.insert(
-        //     DrawId::TeleBox,
-        //     ()
-        // );
+            .insert(DrawId::Box, (Images::Box, Rect::new(0.0, 0.0, 0.5, 1.0)));
+        self.draw_id.insert(
+            DrawId::TeleBox,
+            (Images::TeleBox, Rect::new(0.0, 0.0, 1.0, 1.0))
+        );
 
         self.draw_id.insert(
             DrawId::Floor,
-            (Images::Floor, Rect::new(0.0, 0.0, 16.0, 16.0)),
+            (Images::Floor, Rect::new(0.0, 0.0, 0.5, 0.3333)),
         );
         self.draw_id.insert(
             DrawId::Floor2,
-            (Images::Floor, Rect::new(0.0, 16.0, 16.0, 16.0)),
+            (Images::Floor, Rect::new(0.0, 0.3333, 0.5, 0.3333)),
         );
         self.draw_id.insert(
             DrawId::Floor3,
-            (Images::Floor, Rect::new(0.0, 32.0, 16.0, 16.0)),
+            (Images::Floor, Rect::new(0.0, 0.6666, 0.5, 0.3333)),
         );
 
         self.draw_id.insert(
             DrawId::Button,
-            (Images::Button, Rect::new(0.0, 0.0, 16.0, 16.0)),
+            (Images::Button, Rect::new(0.0, 0.0, 0.5, 1.0)),
         );
         // self.draw_id.insert(
         //     DrawId::Teleport,
@@ -97,25 +103,25 @@ impl Resources {
 
         self.draw_id.insert(
             DrawId::HorizontalWallOpened,
-            (Images::Wall, Rect::new(0.0, 0.0, 32.0, 32.0)),
+            (Images::Wall, Rect::new(0.0, 0.0, 0.25, 0.14286)),
         );
         self.draw_id.insert(
             DrawId::HorizontalWallClosed,
-            (Images::Wall, Rect::new(32.0, 0.0, 32.0, 32.0)),
+            (Images::Wall, Rect::new(0.25, 0.0, 0.25, 0.14286)),
         );
         self.draw_id.insert(
             DrawId::VerticalWallOpened,
-            (Images::Wall, Rect::new(64.0, 0.0, 32.0, 32.0)),
+            (Images::Wall, Rect::new(0.5, 0.0, 0.25, 0.14286)),
         );
         self.draw_id.insert(
             DrawId::VerticalWallClosed,
-            (Images::Wall, Rect::new(96.0, 0.0, 32.0, 32.0)),
+            (Images::Wall, Rect::new(0.75, 0.0, 0.25, 0.14286)),
         );
 
-        // self.draw_id.insert(
-        //     DrawId::Win,
-        //     ()
-        // )
+        self.draw_id.insert(
+            DrawId::Win,
+            (Images::Win, Rect::new(0.0, 0.0, 1.0, 1.0))
+        );
 
         Ok(())
     }
@@ -188,7 +194,7 @@ impl Resources {
         &self,
         canvas: &mut Canvas,
         draw_id: DrawId,
-        mut draw_param: DrawParam,
+        draw_param: DrawParam,
     ) -> GameResult {
         let (image, src_rect) =
             self.draw_id
@@ -206,8 +212,7 @@ impl Resources {
                 image
             )))?;
 
-        draw_param.src = src_rect.clone();
-        canvas.draw(image, draw_param);
+        canvas.draw(image, draw_param.src(src_rect.clone()));
 
         Ok(())
     }

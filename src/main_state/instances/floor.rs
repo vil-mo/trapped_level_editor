@@ -23,4 +23,12 @@ impl Floor {
             durability: -1,
         }
     }
+
+    pub fn default(floor_type: FloorType) -> Floor {
+        Floor {
+            floor_type,
+            color: ActivatingColor::None,
+            durability: -1,
+        }
+    }
 }

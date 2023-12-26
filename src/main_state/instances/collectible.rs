@@ -13,4 +13,8 @@ impl Collectible {
     pub fn new(collectible_type: CollectibleType) -> Collectible {
         Collectible { collectible_type }
     }
+
+    pub fn default(collectible_type: CollectibleType) -> Collectible {
+        Collectible { collectible_type }
+    }
 }

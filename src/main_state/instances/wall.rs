@@ -28,6 +28,20 @@ impl WallData {
             opened,
         }
     }
+
+    pub fn default(wall_type: WallType) -> WallData {
+        WallData {
+            wall_type,
+            color: ActivatingColor::None,
+            input_dependent: false,
+            opened: false,
+        }
+    }
+}
+
+pub enum WallOrientation {
+    Right,
+    Down,
 }
 
 #[non_exhaustive]
@@ -51,6 +65,13 @@ impl Wall {
         }
         if let Some(data) = other.down {
             self.down = Some(data);
+        }
+    }
+
+    pub fn merge_data(&mut self, other: WallData, orientation: WallOrientation) {
+        match orientation {
+            WallOrientation::Right => self.right = Some(other),
+            WallOrientation::Down => self.down = Some(other),
         }
     }
 }
