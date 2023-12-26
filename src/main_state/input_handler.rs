@@ -76,10 +76,10 @@ impl InputHandler {
     }
 
     pub fn handle_input(&mut self, input: ggez::input::keyboard::KeyInput) {
-        println!(
-            "value: {:?}, scancode: {}, keycode: {:?}",
-            "nowe", input.scancode, input.keycode
-        );
+        // println!(
+        //     "value: {:?}, scancode: {}, keycode: {:?}",
+        //     "nowe", input.scancode, input.keycode
+        // );
 
         let Some(keycode) = input.keycode else {
             return;
@@ -90,12 +90,6 @@ impl InputHandler {
                 VirtualKeyCode::Key1 => self.floor_durability = 1,
                 VirtualKeyCode::Key2 => self.floor_durability = 2,
                 VirtualKeyCode::Key3 => self.floor_durability = 3,
-                VirtualKeyCode::Key4 => self.floor_durability = 4,
-                VirtualKeyCode::Key5 => self.floor_durability = 5,
-                VirtualKeyCode::Key6 => self.floor_durability = 6,
-                VirtualKeyCode::Key7 => self.floor_durability = 7,
-                VirtualKeyCode::Key8 => self.floor_durability = 8,
-                VirtualKeyCode::Key9 => self.floor_durability = 9,
 
                 _ => (),
             }
@@ -134,7 +128,7 @@ impl InputHandler {
 
             VirtualKeyCode::B => self.waiting_for_durability_input = true,
 
-            VirtualKeyCode::Escape => self.request_save = true,
+            VirtualKeyCode::Return => self.request_save = true,
             VirtualKeyCode::Space => self.request_load = true,
 
             _ => (),

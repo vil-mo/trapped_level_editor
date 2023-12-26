@@ -6,8 +6,8 @@ use ggez::{
 };
 
 use super::instances::{
-    collectible::CollectibleType, floor::FloorType, object::ObjectType, wall::Wall,
-    ActivatingColor, LayerContent,
+    collectible::CollectibleType, floor::FloorType, object::ObjectType, wall::Wall ,
+    LayerContent,
 };
 
 #[derive(Debug, Hash, PartialEq, Eq)]
@@ -19,6 +19,7 @@ enum Images {
     Wall,
     TeleBox,
     Win,
+    Teleport,
 }
 
 #[derive(Debug, PartialEq, Eq, Hash)]
@@ -60,6 +61,7 @@ impl Resources {
         let wall_img = Image::from_path(ctx, "/Wall.png")?;
         let telebox_img = Image::from_path(ctx, "/TeleBox.png")?;
         let win_img = Image::from_path(ctx, "/Win.png")?;
+        let teleport_img = Image::from_path(ctx, "/Teleport.png")?;
 
         self.images.insert(Images::Box, box_img);
         self.images.insert(Images::Button, button_img);
@@ -68,6 +70,7 @@ impl Resources {
         self.images.insert(Images::Wall, wall_img);
         self.images.insert(Images::TeleBox, telebox_img);
         self.images.insert(Images::Win, win_img);
+        self.images.insert(Images::Teleport, teleport_img);
 
         self.draw_id.insert(
             DrawId::Ghost,
@@ -97,41 +100,44 @@ impl Resources {
             DrawId::Button,
             (Images::Button, Rect::new(0.0, 0.0, 0.5, 1.0)),
         );
-        // self.draw_id.insert(
-        //     DrawId::Teleport,
-        //     ()
-        // )
+        self.draw_id.insert(
+            DrawId::Teleport,
+            (Images::Teleport, Rect::new(0.0, 0.0, 0.5, 1.0)),
+        );
 
         self.draw_id.insert(
-            DrawId::HorizontalWallOpened,
-            (Images::Wall, Rect::new(0.0, 0.0, 0.25, 0.14286)),
-        );
-        self.draw_id.insert(
-            DrawId::HorizontalWallClosed,
-            (Images::Wall, Rect::new(0.25, 0.0, 0.25, 0.14286)),
-        );
-        self.draw_id.insert(
             DrawId::VerticalWallOpened,
-            (Images::Wall, Rect::new(0.5, 0.0, 0.25, 0.14286)),
+            (Images::Wall, Rect::new(0.0, 0.0, 0.25, 1.0)),
         );
         self.draw_id.insert(
             DrawId::VerticalWallClosed,
-            (Images::Wall, Rect::new(0.75, 0.0, 0.25, 0.14286)),
+            (Images::Wall, Rect::new(0.25, 0.0, 0.25, 1.0)),
+        );
+        self.draw_id.insert(
+            DrawId::HorizontalWallOpened,
+            (Images::Wall, Rect::new(0.5, 0.0, 0.25, 1.0)),
+        );
+        self.draw_id.insert(
+            DrawId::HorizontalWallClosed,
+            (Images::Wall, Rect::new(0.75, 0.0, 0.25, 1.0)),
         );
 
-        self.draw_id
-            .insert(DrawId::Win, (Images::Win, Rect::new(0.0, 0.0, 1.0, 1.0)));
+        self.draw_id.insert(
+            DrawId::Win, 
+            (Images::Win, Rect::new(0.0, 0.0, 1.0, 1.0))
+        );
 
         Ok(())
     }
 
     pub fn draw_content(
         &self,
+        ctx: &Context,
         canvas: &mut Canvas,
         content: LayerContent,
         draw_param: DrawParam,
     ) -> GameResult {
-        let mut color = ActivatingColor::None;
+        let color;
 
         let draw_id = match content {
             LayerContent::Object(obj) => {
@@ -161,7 +167,7 @@ impl Resources {
             }
 
             LayerContent::Wall(wl) => {
-                self.draw_wall(canvas, wl, draw_param)?;
+                self.draw_wall(ctx, canvas, wl, draw_param)?;
 
                 return Ok(());
             }
@@ -180,9 +186,22 @@ impl Resources {
         Ok(())
     }
 
-    pub fn draw_wall(&self, canvas: &mut Canvas, wall: Wall, draw_param: DrawParam) -> GameResult {
+    pub fn draw_wall(
+        &self,
+        ctx: &Context,
+        canvas: &mut Canvas,
+        wall: Wall,
+        draw_param: DrawParam,
+    ) -> GameResult {
         if let Some(wl) = wall.right {
-            let draw_id = match wl.opened {
+            let draw_id = match match wl.input_dependent {
+                true => match wl.opened {
+                    true => ctx.time.ticks() % 70 <= 60,
+                    false => ctx.time.ticks() % 70 > 60,
+                }
+
+                false => wl.opened,
+            } {
                 true => DrawId::VerticalWallOpened,
                 false => DrawId::VerticalWallClosed,
             };
@@ -191,7 +210,14 @@ impl Resources {
         }
 
         if let Some(wl) = wall.down {
-            let draw_id = match wl.opened {
+            let draw_id = match match wl.input_dependent {
+                true => match wl.opened {
+                    true => ctx.time.ticks() % 70 <= 60,
+                    false => ctx.time.ticks() % 70 > 60,
+                }
+
+                false => wl.opened,
+            } {
                 true => DrawId::HorizontalWallOpened,
                 false => DrawId::HorizontalWallClosed,
             };

@@ -28,7 +28,9 @@ fn write_line(
     content.push_str(&pos.y.to_string());
     content.push(' ');
 
-    content.push_str(suffix.as_ref());
+    if suffix.as_ref().len() > 0 {
+        content.push_str(suffix.as_ref());
+    }
 
     for (key, val) in properties {
         content.push(' ');
@@ -128,7 +130,7 @@ pub fn save(level_data: &LevelData, path: &Path) -> GameResult {
 
         let suffix = "";
 
-        let properties: Vec<(&str, &str)> = vec![];
+        let properties = vec![("c", collectible.color.to_string())];
 
         write_line(&mut contents, name, pos, suffix, &properties);
     }
@@ -252,7 +254,7 @@ fn parse_bool(b: &str) -> bool {
 
 fn init_object<'a>(object: &mut Object, props: impl std::iter::Iterator<Item = &'a str>) {
     for prop in props {
-        let Some((word, val)) = prop.split_once(',') else {
+        let Some((word, val)) = prop.split_once(':') else {
             continue;
         };
         match word {
@@ -265,7 +267,7 @@ fn init_object<'a>(object: &mut Object, props: impl std::iter::Iterator<Item = &
 
 fn init_wall<'a>(wall: &mut WallData, props: impl std::iter::Iterator<Item = &'a str>) {
     for prop in props {
-        let Some((word, val)) = prop.split_once(',') else {
+        let Some((word, val)) = prop.split_once(':') else {
             continue;
         };
         match word {
@@ -280,7 +282,7 @@ fn init_wall<'a>(wall: &mut WallData, props: impl std::iter::Iterator<Item = &'a
 
 fn init_floor<'a>(floor: &mut Floor, props: impl std::iter::Iterator<Item = &'a str>) {
     for prop in props {
-        let Some((word, val)) = prop.split_once(',') else {
+        let Some((word, val)) = prop.split_once(':') else {
             continue;
         };
         match word {
@@ -303,10 +305,11 @@ fn init_collectible<'a>(
     props: impl std::iter::Iterator<Item = &'a str>,
 ) {
     for prop in props {
-        let Some((word, val)) = prop.split_once(',') else {
+        let Some((word, val)) = prop.split_once(':') else {
             continue;
         };
         match word {
+            "c" => collectible.color = parse_color(val),
             _ => (),
         }
     }

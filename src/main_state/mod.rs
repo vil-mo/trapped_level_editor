@@ -5,11 +5,16 @@ use ggez::event::MouseButton;
 use ggez::glam::IVec2;
 use ggez::graphics;
 use ggez::graphics::Color;
+use ggez::graphics::DrawParam;
 use ggez::graphics::Rect;
 use ggez::graphics::Sampler;
+use ggez::graphics::Text;
+use ggez::graphics::TextFragment;
 use ggez::mint::Point2;
 use ggez::Context;
 use ggez::GameResult;
+use ggez::GameError;
+use ggez::winit::event::VirtualKeyCode;
 
 use self::input_handler::InputHandler;
 use self::instances::wall::WallOrientation;
@@ -28,6 +33,13 @@ pub struct MainState {
     input_handler: InputHandler,
     level_data: LevelData,
     resources: Resources,
+
+    current_path: String,
+    showing_error: bool,
+    entering_text: bool,
+    entered_text_consumed: bool,
+
+    text_to_draw: String,
 }
 
 impl MainState {
@@ -37,6 +49,13 @@ impl MainState {
             input_handler: InputHandler::new(),
             level_data: LevelData::new(),
             resources: Resources::new(),
+
+            current_path: String::new(),
+            showing_error: false,
+            entering_text: false,
+            entered_text_consumed: true,
+
+            text_to_draw: String::new(),
         };
 
         ms.resources.initialize(ctx)?;
@@ -70,10 +89,15 @@ impl MainState {
         let x = size_x * coords.x % (Self::CELL_SIZE as f32);
         let y = size_y * coords.y % (Self::CELL_SIZE as f32);
 
-        match Self::CELL_SIZE as f32 - x > Self::CELL_SIZE as f32 - y {
+        match Self::CELL_SIZE as f32 - x < Self::CELL_SIZE as f32 - y {
             true => WallOrientation::Right,
             false => WallOrientation::Down,
         }
+    }
+
+    fn encountered_error(&mut self, error: GameError) {
+        self.showing_error = true;
+        self.text_to_draw = error.to_string();
     }
 }
 
@@ -102,6 +126,42 @@ impl event::EventHandler<ggez::GameError> for MainState {
             )
         }
 
+
+        if self.input_handler.request_save {
+            if self.entered_text_consumed {
+                self.entering_text = true;
+                self.text_to_draw = self.current_path.clone();
+            } else {
+                let result = serialization::save(
+                    &self.level_data,
+                    Path::new(&self.current_path),
+                );
+                self.entered_text_consumed = true;
+
+                if let Err(error) = result {
+                    self.encountered_error(error);
+                }
+
+                self.input_handler.request_save = false;
+            }
+        }
+        if self.input_handler.request_load {
+            if self.entered_text_consumed {
+                self.entering_text = true;
+                self.text_to_draw = self.current_path.clone();
+            } else {
+                let result = serialization::load(Path::new(&self.current_path));
+                self.entered_text_consumed = true;
+
+                match result {
+                    Ok(data) => self.level_data = data,
+                    Err(error) => self.encountered_error(error),
+                }
+
+                self.input_handler.request_load = false;
+            }
+        }
+
         Ok(())
     }
 
@@ -123,19 +183,38 @@ impl event::EventHandler<ggez::GameError> for MainState {
         input: ggez::input::keyboard::KeyInput,
         _repeated: bool,
     ) -> Result<(), ggez::GameError> {
-        self.input_handler.handle_input(input);
-
-        if self.input_handler.request_save {
-            serialization::save(
-                &self.level_data,
-                Path::new("/home/vilmo/Documents/trapped/level"),
-            )?;
-            self.input_handler.request_save = false;
+        if self.showing_error {
+            self.showing_error = false;
+            self.text_to_draw.clear();
         }
-        if self.input_handler.request_load {
-            self.level_data =
-                serialization::load(Path::new("/home/vilmo/Documents/trapped/level"))?;
-            self.input_handler.request_load = false;
+
+        if self.entering_text {
+            match input.keycode {
+                Some(VirtualKeyCode::Back) => {
+                    self.current_path.pop();
+                    self.text_to_draw = self.current_path.clone();
+                }
+                Some(VirtualKeyCode::Return) => {
+                    self.entering_text = false;
+                    self.entered_text_consumed = false;
+                    self.text_to_draw.clear();
+                }
+
+                _ => (),
+            }
+        } else {
+            self.input_handler.handle_input(input);
+        }
+
+        Ok(())
+    }
+
+    fn text_input_event(&mut self, _ctx: &mut Context, character: char) -> Result<(), ggez::GameError> {
+        if self.entering_text {
+            if !character.is_control() {
+                self.current_path.push(character);
+                self.text_to_draw = self.current_path.clone();
+            }
         }
 
         Ok(())
@@ -151,14 +230,25 @@ impl event::EventHandler<ggez::GameError> for MainState {
         let cntntn =
             LayerContent::new(self.input_handler.get_data(), self.is_right(ctx, mouse_pos));
 
-        self.level_data.draw_with(
+        let result = self.level_data.draw_with(
+            ctx,
             cntntn,
             &self.to_level_loader_coords(ctx, mouse_pos),
             &mut canvas,
             &self.resources,
-        )?;
+        );
 
-        canvas.finish(ctx)?;
+        if let Err(error) = result {
+            self.encountered_error(error);
+        }
+
+        let fragment = TextFragment::from(self.text_to_draw.clone());
+        let text = Text::new(fragment);
+        canvas.draw(&text, DrawParam::default());
+
+        if let Err(error) = canvas.finish(ctx) {
+            self.encountered_error(error);
+        }
 
         Ok(())
     }

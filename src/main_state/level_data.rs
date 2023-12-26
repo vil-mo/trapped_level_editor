@@ -4,7 +4,7 @@ use ggez::{
     glam::IVec2,
     graphics::{Canvas, DrawParam},
     mint::Point2,
-    GameResult,
+    Context, GameResult,
 };
 
 use super::{
@@ -37,37 +37,38 @@ impl LevelData {
             y: (pos.y as f32) * 16.0,
         })
     }
-
-    pub fn draw(&self, canvas: &mut Canvas, resources: &Resources) -> GameResult {
-        for (pos, floor) in &self.floors {
-            let draw_param = Self::gen_draw_param(&pos);
-            resources.draw_content(canvas, LayerContent::Floor(floor.clone()), draw_param)?;
-        }
-
-        for (pos, collectible) in &self.collectibles {
-            let draw_param = Self::gen_draw_param(&pos);
-            resources.draw_content(
-                canvas,
-                LayerContent::Collectible(collectible.clone()),
-                draw_param,
-            )?;
-        }
-
-        for (pos, object) in &self.objects {
-            let draw_param = Self::gen_draw_param(&pos);
-            resources.draw_content(canvas, LayerContent::Object(object.clone()), draw_param)?;
-        }
-
-        for (pos, wall) in &self.walls {
-            let draw_param = Self::gen_draw_param(&pos);
-            resources.draw_content(canvas, LayerContent::Wall(wall.clone()), draw_param)?;
-        }
-
-        Ok(())
-    }
-
+    //
+    // pub fn draw(&self, canvas: &mut Canvas, resources: &Resources) -> GameResult {
+    //     for (pos, floor) in &self.floors {
+    //         let draw_param = Self::gen_draw_param(&pos);
+    //         resources.draw_content(canvas, LayerContent::Floor(floor.clone()), draw_param)?;
+    //     }
+    //
+    //     for (pos, collectible) in &self.collectibles {
+    //         let draw_param = Self::gen_draw_param(&pos);
+    //         resources.draw_content(
+    //             canvas,
+    //             LayerContent::Collectible(collectible.clone()),
+    //             draw_param,
+    //         )?;
+    //     }
+    //
+    //     for (pos, object) in &self.objects {
+    //         let draw_param = Self::gen_draw_param(&pos);
+    //         resources.draw_content(canvas, LayerContent::Object(object.clone()), draw_param)?;
+    //     }
+    //
+    //     for (pos, wall) in &self.walls {
+    //         let draw_param = Self::gen_draw_param(&pos);
+    //         resources.draw_content(canvas, LayerContent::Wall(wall.clone()), draw_param)?;
+    //     }
+    //
+    //     Ok(())
+    // }
+    //
     pub fn draw_with(
         &self,
+        ctx: &Context,
         data_with: LayerContent,
         pos_with: &IVec2,
         canvas: &mut Canvas,
@@ -84,13 +85,13 @@ impl LevelData {
                 }
             }
             let draw_param = Self::gen_draw_param(&pos);
-            resources.draw_content(canvas, LayerContent::Floor(content), draw_param)?;
+            resources.draw_content(ctx, canvas, LayerContent::Floor(content), draw_param)?;
         }
 
         if !consumed {
             if let LayerContent::Floor(_) = data_with {
                 let draw_param = Self::gen_draw_param(&pos_with);
-                resources.draw_content(canvas, data_with.clone(), draw_param)?;
+                resources.draw_content(ctx, canvas, data_with.clone(), draw_param)?;
             }
         }
 
@@ -103,13 +104,13 @@ impl LevelData {
                 }
             }
             let draw_param = Self::gen_draw_param(&pos);
-            resources.draw_content(canvas, LayerContent::Collectible(content), draw_param)?;
+            resources.draw_content(ctx, canvas, LayerContent::Collectible(content), draw_param)?;
         }
 
         if !consumed {
             if let LayerContent::Collectible(_) = data_with {
                 let draw_param = Self::gen_draw_param(&pos_with);
-                resources.draw_content(canvas, data_with.clone(), draw_param)?;
+                resources.draw_content(ctx, canvas, data_with.clone(), draw_param)?;
             }
         }
 
@@ -122,13 +123,13 @@ impl LevelData {
                 }
             }
             let draw_param = Self::gen_draw_param(&pos);
-            resources.draw_content(canvas, LayerContent::Object(content), draw_param)?;
+            resources.draw_content(ctx, canvas, LayerContent::Object(content), draw_param)?;
         }
 
         if !consumed {
             if let LayerContent::Object(_) = data_with {
                 let draw_param = Self::gen_draw_param(&pos_with);
-                resources.draw_content(canvas, data_with.clone(), draw_param)?;
+                resources.draw_content(ctx, canvas, data_with.clone(), draw_param)?;
             }
         }
 
@@ -141,13 +142,13 @@ impl LevelData {
                 }
             }
             let draw_param = Self::gen_draw_param(&pos);
-            resources.draw_content(canvas, LayerContent::Wall(content), draw_param)?;
+            resources.draw_content(ctx, canvas, LayerContent::Wall(content), draw_param)?;
         }
 
         if !consumed {
             if let LayerContent::Wall(_) = data_with {
                 let draw_param = Self::gen_draw_param(&pos_with);
-                resources.draw_content(canvas, data_with.clone(), draw_param)?;
+                resources.draw_content(ctx, canvas, data_with.clone(), draw_param)?;
             }
         }
 
