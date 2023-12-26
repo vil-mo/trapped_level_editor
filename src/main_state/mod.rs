@@ -12,8 +12,8 @@ use ggez::Context;
 use ggez::GameResult;
 
 use self::input_handler::InputHandler;
-use self::instances::LayerContent;
 use self::instances::wall::WallOrientation;
+use self::instances::LayerContent;
 use self::level_data::LevelData;
 use self::resources::Resources;
 
@@ -44,7 +44,6 @@ impl MainState {
         Ok(ms)
     }
 
-
     const CELL_SIZE: i32 = 16;
 
     fn to_level_loader_coords(&self, ctx: &Context, coords: Point2<f32>) -> IVec2 {
@@ -53,8 +52,12 @@ impl MainState {
 
         let (x, y);
         unsafe {
-            x = (size_x * coords.x / (Self::CELL_SIZE as f32)).floor().to_int_unchecked();
-            y = (size_y * coords.y / (Self::CELL_SIZE as f32)).floor().to_int_unchecked();
+            x = (size_x * coords.x / (Self::CELL_SIZE as f32))
+                .floor()
+                .to_int_unchecked();
+            y = (size_y * coords.y / (Self::CELL_SIZE as f32))
+                .floor()
+                .to_int_unchecked();
         }
 
         IVec2 { x, y }
@@ -66,7 +69,7 @@ impl MainState {
 
         let x = size_x * coords.x % (Self::CELL_SIZE as f32);
         let y = size_y * coords.y % (Self::CELL_SIZE as f32);
-        
+
         match Self::CELL_SIZE as f32 - x > Self::CELL_SIZE as f32 - y {
             true => WallOrientation::Right,
             false => WallOrientation::Down,
@@ -102,10 +105,15 @@ impl event::EventHandler<ggez::GameError> for MainState {
         Ok(())
     }
 
-    fn mouse_wheel_event(&mut self, _ctx: &mut Context, _x: f32, y: f32) -> Result<(), ggez::GameError> {
+    fn mouse_wheel_event(
+        &mut self,
+        _ctx: &mut Context,
+        _x: f32,
+        y: f32,
+    ) -> Result<(), ggez::GameError> {
         let scale_factor = 1.1_f32.powf(-y);
         self.screen_rect.scale(scale_factor, scale_factor);
-        
+
         Ok(())
     }
 
@@ -118,11 +126,15 @@ impl event::EventHandler<ggez::GameError> for MainState {
         self.input_handler.handle_input(input);
 
         if self.input_handler.request_save {
-            serialization::save(&self.level_data, Path::new("/home/vilmo/Documents/trapped/level"))?;
+            serialization::save(
+                &self.level_data,
+                Path::new("/home/vilmo/Documents/trapped/level"),
+            )?;
             self.input_handler.request_save = false;
         }
         if self.input_handler.request_load {
-            self.level_data = serialization::load(Path::new("/home/vilmo/Documents/trapped/level"))?;
+            self.level_data =
+                serialization::load(Path::new("/home/vilmo/Documents/trapped/level"))?;
             self.input_handler.request_load = false;
         }
 
@@ -136,9 +148,15 @@ impl event::EventHandler<ggez::GameError> for MainState {
 
         let mouse_pos = ctx.mouse.position();
 
-        let cntntn = LayerContent::new(self.input_handler.get_data(), self.is_right(ctx, mouse_pos));
+        let cntntn =
+            LayerContent::new(self.input_handler.get_data(), self.is_right(ctx, mouse_pos));
 
-        self.level_data.draw_with(cntntn, &self.to_level_loader_coords(ctx, mouse_pos), &mut canvas, &self.resources)?;
+        self.level_data.draw_with(
+            cntntn,
+            &self.to_level_loader_coords(ctx, mouse_pos),
+            &mut canvas,
+            &self.resources,
+        )?;
 
         canvas.finish(ctx)?;
 

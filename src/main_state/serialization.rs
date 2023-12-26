@@ -4,10 +4,10 @@ use ggez::{glam::IVec2, GameResult};
 
 use super::{
     instances::{
-        collectible::{CollectibleType, Collectible},
-        floor::{FloorType, Floor},
+        collectible::{Collectible, CollectibleType},
+        floor::{Floor, FloorType},
         object::{Object, ObjectType},
-        wall::{WallData, WallType, WallOrientation},
+        wall::{WallData, WallOrientation, WallType},
         ActivatingColor, LayerData,
     },
     level_data::LevelData,
@@ -160,7 +160,6 @@ pub fn save(level_data: &LevelData, path: &Path) -> GameResult {
     Ok(())
 }
 
-
 pub fn load(path: &Path) -> GameResult<LevelData> {
     let mut level_data = LevelData::new();
 
@@ -184,7 +183,7 @@ pub fn load(path: &Path) -> GameResult<LevelData> {
             "player" => LayerData::Object(Object::default(ObjectType::Player)),
             "box" => LayerData::Object(Object::default(ObjectType::Box)),
             "telebox" => LayerData::Object(Object::default(ObjectType::TeleBox)),
-            
+
             "floor" => LayerData::Floor(Floor::default(FloorType::Normal)),
             "button" => LayerData::Floor(Floor::default(FloorType::Button)),
             "teleport" => LayerData::Floor(Floor::default(FloorType::Teleport)),
@@ -199,28 +198,35 @@ pub fn load(path: &Path) -> GameResult<LevelData> {
         let Some(pos) = properties.next() else {
             continue;
         };
-        let Some(pos) = pos.split_once(',') else {continue;};
-        let (Ok(pos_x), Ok(pos_y)) = (pos.0.parse(), pos.1.parse()) else {continue;};
+        let Some(pos) = pos.split_once(',') else {
+            continue;
+        };
+        let (Ok(pos_x), Ok(pos_y)) = (pos.0.parse(), pos.1.parse()) else {
+            continue;
+        };
 
         let pos = IVec2 { x: pos_x, y: pos_y };
 
         let mut orientation = WallOrientation::Down;
 
         if let LayerData::Wall(_) = name {
-            let Some(s) = properties.next() else {continue;};
+            let Some(s) = properties.next() else {
+                continue;
+            };
             if s == "r" {
                 orientation = WallOrientation::Right;
             }
         }
 
-
         match name {
             LayerData::Object(ref mut object) => init_object(object, properties),
             LayerData::Floor(ref mut floor) => init_floor(floor, properties),
             LayerData::Wall(ref mut wall) => init_wall(wall, properties),
-            LayerData::Collectible(ref mut collectible) => init_collectible(collectible, properties),
+            LayerData::Collectible(ref mut collectible) => {
+                init_collectible(collectible, properties)
+            }
         }
-        
+
         level_data.insert(pos, name, orientation);
     }
 
@@ -240,55 +246,68 @@ fn parse_color(color: &str) -> ActivatingColor {
     }
 }
 
-fn parse_bool(b: &str) -> bool{
+fn parse_bool(b: &str) -> bool {
     b == "true"
 }
 
 fn init_object<'a>(object: &mut Object, props: impl std::iter::Iterator<Item = &'a str>) {
-     for prop in props {
-         let Some((word, val)) = prop.split_once(',') else {continue;};
-         match word {
-             "c" => object.color = parse_color(val),
+    for prop in props {
+        let Some((word, val)) = prop.split_once(',') else {
+            continue;
+        };
+        match word {
+            "c" => object.color = parse_color(val),
 
-             _ => (),
-         }
-     }
+            _ => (),
+        }
+    }
 }
 
-
 fn init_wall<'a>(wall: &mut WallData, props: impl std::iter::Iterator<Item = &'a str>) {
-     for prop in props {
-         let Some((word, val)) = prop.split_once(',') else {continue;};
-         match word {
-             "c" => wall.color = parse_color(val),
-             "closed" => wall.opened = parse_bool(val),
-             "inputbased" => wall.input_dependent = parse_bool(val),
-            
-             _ => (),
-         }
-     }
+    for prop in props {
+        let Some((word, val)) = prop.split_once(',') else {
+            continue;
+        };
+        match word {
+            "c" => wall.color = parse_color(val),
+            "closed" => wall.opened = parse_bool(val),
+            "inputbased" => wall.input_dependent = parse_bool(val),
+
+            _ => (),
+        }
+    }
 }
 
 fn init_floor<'a>(floor: &mut Floor, props: impl std::iter::Iterator<Item = &'a str>) {
-     for prop in props {
-         let Some((word, val)) = prop.split_once(',') else {continue;};
-         match word {
-             "c" => floor.color = parse_color(val),
-             "dur" => floor.durability = if let Ok(ival) = val.parse() {ival} else {continue;},
-            
-             _ => (),
-         }
-     }
+    for prop in props {
+        let Some((word, val)) = prop.split_once(',') else {
+            continue;
+        };
+        match word {
+            "c" => floor.color = parse_color(val),
+            "dur" => {
+                floor.durability = if let Ok(ival) = val.parse() {
+                    ival
+                } else {
+                    continue;
+                }
+            }
+
+            _ => (),
+        }
+    }
 }
 
-fn init_collectible<'a>(collectible: &mut Collectible, props: impl std::iter::Iterator<Item = &'a str>) {
-     for prop in props {
-         let Some((word, val)) = prop.split_once(',') else {continue;};
-         match word {
-             _ => (),
-         }
-     }
+fn init_collectible<'a>(
+    collectible: &mut Collectible,
+    props: impl std::iter::Iterator<Item = &'a str>,
+) {
+    for prop in props {
+        let Some((word, val)) = prop.split_once(',') else {
+            continue;
+        };
+        match word {
+            _ => (),
+        }
+    }
 }
-
-
-

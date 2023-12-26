@@ -6,7 +6,8 @@ use ggez::{
 };
 
 use super::instances::{
-    collectible::CollectibleType, floor::FloorType, object::ObjectType, wall::Wall, LayerContent,
+    collectible::CollectibleType, floor::FloorType, object::ObjectType, wall::Wall,
+    ActivatingColor, LayerContent,
 };
 
 #[derive(Debug, Hash, PartialEq, Eq)]
@@ -76,7 +77,7 @@ impl Resources {
             .insert(DrawId::Box, (Images::Box, Rect::new(0.0, 0.0, 0.5, 1.0)));
         self.draw_id.insert(
             DrawId::TeleBox,
-            (Images::TeleBox, Rect::new(0.0, 0.0, 1.0, 1.0))
+            (Images::TeleBox, Rect::new(0.0, 0.0, 1.0, 1.0)),
         );
 
         self.draw_id.insert(
@@ -118,10 +119,8 @@ impl Resources {
             (Images::Wall, Rect::new(0.75, 0.0, 0.25, 0.14286)),
         );
 
-        self.draw_id.insert(
-            DrawId::Win,
-            (Images::Win, Rect::new(0.0, 0.0, 1.0, 1.0))
-        );
+        self.draw_id
+            .insert(DrawId::Win, (Images::Win, Rect::new(0.0, 0.0, 1.0, 1.0)));
 
         Ok(())
     }
@@ -132,59 +131,72 @@ impl Resources {
         content: LayerContent,
         draw_param: DrawParam,
     ) -> GameResult {
+        let mut color = ActivatingColor::None;
+
         let draw_id = match content {
-            LayerContent::Object(obj) => match obj.object_type {
-                ObjectType::Player => DrawId::Ghost,
-                ObjectType::Box => DrawId::Box,
-                ObjectType::TeleBox => DrawId::TeleBox,
-            },
+            LayerContent::Object(obj) => {
+                color = obj.color;
+                match obj.object_type {
+                    ObjectType::Player => DrawId::Ghost,
+                    ObjectType::Box => DrawId::Box,
+                    ObjectType::TeleBox => DrawId::TeleBox,
+                }
+            }
 
-            LayerContent::Floor(flr) => match flr.floor_type {
-                FloorType::Normal => match flr.durability {
-                    1 => DrawId::Floor,
-                    2 => DrawId::Floor2,
-                    3 => DrawId::Floor3,
+            LayerContent::Floor(flr) => {
+                color = flr.color;
 
-                    _ => return Ok(()),
-                },
+                match flr.floor_type {
+                    FloorType::Normal => match flr.durability {
+                        1 => DrawId::Floor,
+                        2 => DrawId::Floor2,
+                        3 => DrawId::Floor3,
 
-                FloorType::Button => DrawId::Button,
-                FloorType::Teleport => DrawId::Teleport,
-            },
+                        _ => return Ok(()),
+                    },
 
-            super::instances::Layer::Wall(wl) => {
+                    FloorType::Button => DrawId::Button,
+                    FloorType::Teleport => DrawId::Teleport,
+                }
+            }
+
+            LayerContent::Wall(wl) => {
                 self.draw_wall(canvas, wl, draw_param)?;
 
                 return Ok(());
             }
 
-            LayerContent::Collectible(clct) => match clct.collectible_type {
-                CollectibleType::Win => DrawId::Win,
-            },
+            LayerContent::Collectible(clct) => {
+                color = clct.color;
+
+                match clct.collectible_type {
+                    CollectibleType::Win => DrawId::Win,
+                }
+            }
         };
 
-        self.draw_drawing(canvas, draw_id, draw_param)?;
+        self.draw_drawing(canvas, draw_id, draw_param.color(color))?;
 
         Ok(())
     }
 
     pub fn draw_wall(&self, canvas: &mut Canvas, wall: Wall, draw_param: DrawParam) -> GameResult {
-        let draw_id_option = wall.right.map(|wl| match wl.opened {
-            true => DrawId::VerticalWallOpened,
-            false => DrawId::VerticalWallClosed,
-        });
+        if let Some(wl) = wall.right {
+            let draw_id = match wl.opened {
+                true => DrawId::VerticalWallOpened,
+                false => DrawId::VerticalWallClosed,
+            };
 
-        if let Some(draw_id) = draw_id_option {
-            self.draw_drawing(canvas, draw_id, draw_param)?;
+            self.draw_drawing(canvas, draw_id, draw_param.color(wl.color))?;
         }
 
-        let draw_id_option = wall.down.map(|wl| match wl.opened {
-            true => DrawId::HorizontalWallOpened,
-            false => DrawId::HorizontalWallClosed,
-        });
+        if let Some(wl) = wall.down {
+            let draw_id = match wl.opened {
+                true => DrawId::HorizontalWallOpened,
+                false => DrawId::HorizontalWallClosed,
+            };
 
-        if let Some(draw_id) = draw_id_option {
-            self.draw_drawing(canvas, draw_id, draw_param)?;
+            self.draw_drawing(canvas, draw_id, draw_param.color(wl.color))?;
         }
 
         Ok(())

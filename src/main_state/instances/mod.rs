@@ -1,3 +1,5 @@
+use ggez::graphics::Color;
+
 use self::{
     collectible::Collectible,
     floor::Floor,
@@ -31,6 +33,20 @@ impl ToString for ActivatingColor {
             ActivatingColor::Yellow => String::from("y"),
             ActivatingColor::Cyan => String::from("c"),
             ActivatingColor::Pink => String::from("p"),
+        }
+    }
+}
+
+impl Into<Color> for ActivatingColor {
+    fn into(self) -> Color {
+        match self {
+            ActivatingColor::None => Color::WHITE,
+            ActivatingColor::Red => Color::RED,
+            ActivatingColor::Green => Color::GREEN,
+            ActivatingColor::Blue => Color::BLUE,
+            ActivatingColor::Yellow => Color::YELLOW,
+            ActivatingColor::Cyan => Color::CYAN,
+            ActivatingColor::Pink => Color::MAGENTA,
         }
     }
 }

@@ -76,8 +76,10 @@ impl InputHandler {
     }
 
     pub fn handle_input(&mut self, input: ggez::input::keyboard::KeyInput) {
-
-        println!("value: {:?}, scancode: {}, keycode: {:?}", "nowe", input.scancode, input.keycode);
+        println!(
+            "value: {:?}, scancode: {}, keycode: {:?}",
+            "nowe", input.scancode, input.keycode
+        );
 
         let Some(keycode) = input.keycode else {
             return;
@@ -131,7 +133,6 @@ impl InputHandler {
             VirtualKeyCode::M => self.wall_opened = !self.wall_opened,
 
             VirtualKeyCode::B => self.waiting_for_durability_input = true,
-            
 
             VirtualKeyCode::Escape => self.request_save = true,
             VirtualKeyCode::Space => self.request_load = true,
@@ -197,7 +198,7 @@ impl InputHandler {
             }
 
             Layer::Collectible(()) => {
-                let collectible = Collectible::new(self.collectible_item);
+                let collectible = Collectible::new(self.collectible_item, self.color);
 
                 LayerData::Collectible(collectible)
             }

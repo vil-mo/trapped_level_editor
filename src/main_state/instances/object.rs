@@ -20,6 +20,9 @@ impl Object {
     }
 
     pub fn default(object_type: ObjectType) -> Self {
-        Object {object_type, color: ActivatingColor::None}
+        Object {
+            object_type,
+            color: ActivatingColor::None,
+        }
     }
 }
